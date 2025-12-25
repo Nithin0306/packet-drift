@@ -1,5 +1,6 @@
 package src.graph;
 
+import src.board.Board;
 import src.board.TileType;
 import src.movement.Direction;
 
@@ -14,61 +15,51 @@ public class BoardGraph {
     private int width, height;
     private int totalData; 
 
-    public BoardGraph(String layout, int w, int h) {
-        this.width = w;
-        this.height = h;
+    public BoardGraph(Board board) {
+        this.width = board.getWidth();
+        this.height = board.getHeight();
         this.allNodes = new ArrayList<>();
         this.totalData = 0;
-        initialize(layout);
+        reinitialize(board);
     }
 
-    private void initialize(String layout) {
-        GraphNode[][] tempGrid = new GraphNode[height][width];
-        char[] chars = layout.toCharArray();
+    public void reinitialize(Board board) {
+    this.allNodes.clear(); // Clear old nodes for a fresh start
+    this.totalData = 0;
+    GraphNode[][] tempGrid = new GraphNode[height][width];
 
-        // 1. Create Nodes
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                TileType type = parseChar(chars[y * width + x]);
-                GraphNode node = new GraphNode(x, y, type);
-                
-                if (type == TileType.DATA) totalData++;
-                if (type == TileType.START) {
-                    playerNode = node;
-                    playerNode.setPlayer(true);
-                    node.setType(TileType.HUB); // Start acts as a Hub
-                }
-
-                tempGrid[y][x] = node;
-                allNodes.add(node);
+    // 1. Create Nodes from the Board's random grid
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            TileType type = board.getTile(x, y).getType(); // Read directly from Board
+            GraphNode node = new GraphNode(x, y, type);
+            
+            if (type == TileType.DATA) totalData++;
+            if (type == TileType.START) {
+                playerNode = node;
+                playerNode.setPlayer(true);
+                // In your logic, Start also acts as a Hub
+                node.setType(TileType.HUB); 
             }
-        }
 
-        // 2. Link Neighbors
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                GraphNode current = tempGrid[y][x];
-                for (Direction d : Direction.ALL) {
-                    int nx = x + d.dx;
-                    int ny = y + d.dy;
-                    if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
-                        current.addNeighbor(d, tempGrid[ny][nx]);
-                    }
-                }
-            }
+            tempGrid[y][x] = node;
+            allNodes.add(node);
         }
     }
 
-    private TileType parseChar(char c) {
-        switch (c) {
-            case 'w': return TileType.FIREWALL;
-            case 'g': return TileType.DATA;     
-            case 'm': return TileType.VIRUS;    
-            case 's': return TileType.HUB;      
-            case 'S': return TileType.START;
-            case 'b': return TileType.BLANK;
-            default: return TileType.BLANK;
+    // 2. Link Neighbors (Keep your existing linking logic)
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            GraphNode current = tempGrid[y][x];
+            for (Direction d : Direction.ALL) {
+                int nx = x + d.dx;
+                int ny = y + d.dy;
+                if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+                    current.addNeighbor(d, tempGrid[ny][nx]);
+                }
+            }
         }
+    }
     }
 
     public GraphNode getPlayerNode() { return playerNode; }
