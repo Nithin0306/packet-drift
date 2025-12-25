@@ -1,11 +1,12 @@
 package src.cpu;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import src.board.TileType;
 import src.graph.BoardGraph;
 import src.graph.GraphNode;
 import src.movement.Direction;
-
-import java.util.List;
 
 public class GreedyStrategy {
 
@@ -14,35 +15,39 @@ public class GreedyStrategy {
 
     /**
      * Simulates a full slide in one direction without modifying the real board.
-     * Returns the end position, data collected, and whether it hits a virus.
+     * Returns the end position, data collected, whether it hits a virus, and the collected nodes.
      */
     private static class SimulationResult {
         GraphNode endNode;
         int dataCollected;
         boolean hitsVirus;
+        Set<GraphNode> collectedNodes;
 
-        SimulationResult(GraphNode endNode, int dataCollected, boolean hitsVirus) {
+        SimulationResult(GraphNode endNode, int dataCollected, boolean hitsVirus, Set<GraphNode> collectedNodes) {
             this.endNode = endNode;
             this.dataCollected = dataCollected;
             this.hitsVirus = hitsVirus;
+            this.collectedNodes = collectedNodes;
         }
     }
 
     private SimulationResult simulateSlide(BoardGraph graph, GraphNode start, Direction dir) {
         GraphNode next = start.getNeighbor(dir);
         if (next == null || next.getType() == TileType.FIREWALL) {
-            return new SimulationResult(start, 0, false); // blocked, stays in place (invalid move)
+            return new SimulationResult(start, 0, false, new HashSet<>()); // blocked, stays in place (invalid move)
         }
 
         GraphNode current = start;
         int dataCollected = 0;
         boolean hitsVirus = false;
+        Set<GraphNode> collectedNodes = new HashSet<>();
 
         while (true) {
             current = next;
 
             if (current.getType() == TileType.DATA) {
                 dataCollected++;
+                collectedNodes.add(current);
             } else if (current.getType() == TileType.VIRUS) {
                 hitsVirus = true;
                 // we still continue to find the end position for distance calculation if needed
@@ -58,19 +63,19 @@ public class GreedyStrategy {
             }
         }
 
-        return new SimulationResult(current, dataCollected, hitsVirus);
+        return new SimulationResult(current, dataCollected, hitsVirus, collectedNodes);
     }
 
     /**
-     * Finds the closest remaining DATA tile from a given position.
+     * Finds the closest remaining DATA tile from a given position, excluding specified nodes.
      * Returns Euclidean distance (double).
      */
-    private double distanceToNearestData(BoardGraph graph, GraphNode from) {
+    private double distanceToNearestData(BoardGraph graph, GraphNode from, Set<GraphNode> exclude) {
         List<GraphNode> allNodes = graph.getAllNodes();
         double minDist = Double.MAX_VALUE;
 
         for (GraphNode node : allNodes) {
-            if (node.getType() == TileType.DATA) {
+            if (node.getType() == TileType.DATA && !exclude.contains(node)) {
                 double dx = node.getX() - from.getX();
                 double dy = node.getY() - from.getY();
                 double dist = Math.sqrt(dx * dx + dy * dy);
@@ -107,7 +112,7 @@ public class GreedyStrategy {
             if (sim.hitsVirus) {
                 score = -DEATH_PENALTY; // massive penalty
             } else {
-                double distance = distanceToNearestData(graph, sim.endNode);
+                double distance = distanceToNearestData(graph, sim.endNode, sim.collectedNodes);
                 score = sim.dataCollected * DATA_VALUE - distance;
             }
 
