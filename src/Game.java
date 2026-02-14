@@ -5,6 +5,7 @@ import src.graph.BoardGraph;
 import src.movement.Direction;
 import src.movement.MoveResult;
 import src.movement.SlideSimulator;
+import src.ui.GameFrame;
 
 public class Game {
     private BoardGraph graph;
