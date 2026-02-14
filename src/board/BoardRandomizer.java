@@ -12,6 +12,7 @@ public class BoardRandomizer {
                 
                 // Weights matching your TileType.java: 
                 // BLANK, FIREWALL, DATA, VIRUS, HUB, START
+                //Based on percentages
                 if (chance < 0.65) {
                     grid[y][x] = new Tile(TileType.BLANK);
                 } else if (chance < 0.80) {
