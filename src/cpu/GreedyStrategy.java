@@ -64,11 +64,16 @@ public class GreedyStrategy {
         return new SimulationResult(current, dataCollected, hitsVirus, collectedNodes);
     }
 
+<<<<<<< HEAD
     /**
      * Computes average distance to the k-closest remaining data points using D&C preprocessing.
      */
     private double distanceToNearestCluster(BoardGraph graph, GraphNode from, Set<GraphNode> exclude) {
         List<DCClusterDistance.Point> dataPoints = new ArrayList<>();
+=======
+    private double distanceToNearestData(BoardGraph graph, GraphNode from, Set<GraphNode> exclude) {
+        List<DCClosestPair.Point> dataPoints = new ArrayList<>();
+>>>>>>> 9fda9d34092e92497100bdede047ca3cda74865a
 
         for (GraphNode node : graph.getAllNodes()) {
             if (node.getType() == TileType.DATA && !exclude.contains(node)) {
@@ -88,14 +93,20 @@ public class GreedyStrategy {
         );
     }
 
+<<<<<<< HEAD
     /**
      * Returns the best direction according to the enhanced greedy heuristic:
      * H = (dataCollected × 100) − average_distance_to_k_closest_data
      */
+=======
+>>>>>>> 9fda9d34092e92497100bdede047ca3cda74865a
     public Direction getBestDirection(BoardGraph graph) {
         GraphNode playerNode = graph.getPlayerNode();
         Direction bestDir = null;
         double bestScore = Double.NEGATIVE_INFINITY;
+
+        // DP memo cache for this turn
+        DPMemoCache memo = new DPMemoCache();
 
         for (Direction dir : Direction.ALL) {
             SimulationResult sim = simulateSlide(graph, playerNode, dir);
@@ -109,8 +120,18 @@ public class GreedyStrategy {
             if (sim.hitsVirus) {
                 score = -DEATH_PENALTY;
             } else {
+<<<<<<< HEAD
                 double avgClusterDist = distanceToNearestCluster(graph, sim.endNode, sim.collectedNodes);
                 score = sim.dataCollected * DATA_VALUE - avgClusterDist;
+=======
+                double distance = memo.getOrComputeDistance(
+                        graph,
+                        sim.endNode,
+                        sim.collectedNodes,
+                        (g, f, e) -> distanceToNearestData(g, f, e)
+                );
+                score = sim.dataCollected * DATA_VALUE - distance;
+>>>>>>> 9fda9d34092e92497100bdede047ca3cda74865a
             }
 
             if (score > bestScore) {
