@@ -182,20 +182,25 @@ src/
 
 ### Compilation & Execution
 
+ 1. Navigate to project
 ```bash
-# 1. Navigate to project
 cd packet-drift
+```
 
-# 2. Clean old class files (optional)
+ 2. Clean old class files (optional)
+```bash
 clean.bat          # Windows
 # ./clean.sh       # Linux/Mac
+```
 
-# 3. Compile
-cd src
-javac -d . *.java board\*.java graph\*.java movement\*.java player\*.java cpu\*.java ui\*.java
 
-# 4. Run
-cd ..
+ 3. Compile
+```bash
+javac -d . src\*.java src\board\*.java src\graph\*.java src\movement\*.java src\player\*.java src\cpu\*.java src\ui\*.java
+```
+
+ 4. Run
+```bash
 java src.Game
 ```
 
