@@ -11,11 +11,8 @@ public class GreedyStrategy {
 
     private static final int DATA_VALUE = 100;
     private static final int DEATH_PENALTY = 99999;
-    private static final int K_CLOSEST_FOR_CLUSTER = 3; // tune: 2–4 works well
+    private static final int K_CLOSEST_FOR_CLUSTER = 2; // Average to 2 closest – tunable
 
-    /**
-     * Simulates a full slide in one direction without modifying the real board.
-     */
     private static class SimulationResult {
         GraphNode endNode;
         int dataCollected;
@@ -51,29 +48,21 @@ public class GreedyStrategy {
                 hitsVirus = true;
             }
 
-            if (current.getType() == TileType.HUB) {
-                break;
-            }
+            if (current.getType() == TileType.HUB) break;
 
             next = current.getNeighbor(dir);
-            if (next == null || next.getType() == TileType.FIREWALL) {
-                break;
-            }
+            if (next == null || next.getType() == TileType.FIREWALL) break;
         }
 
         return new SimulationResult(current, dataCollected, hitsVirus, collectedNodes);
     }
 
-<<<<<<< HEAD
     /**
-     * Computes average distance to the k-closest remaining data points using D&C preprocessing.
+     * Computes average distance to the K-closest remaining data points (cluster-aware)
+     * Uses D&C preprocessing from DCClusterDistance
      */
-    private double distanceToNearestCluster(BoardGraph graph, GraphNode from, Set<GraphNode> exclude) {
+    private double distanceToCluster(BoardGraph graph, GraphNode from, Set<GraphNode> exclude) {
         List<DCClusterDistance.Point> dataPoints = new ArrayList<>();
-=======
-    private double distanceToNearestData(BoardGraph graph, GraphNode from, Set<GraphNode> exclude) {
-        List<DCClosestPair.Point> dataPoints = new ArrayList<>();
->>>>>>> 9fda9d34092e92497100bdede047ca3cda74865a
 
         for (GraphNode node : graph.getAllNodes()) {
             if (node.getType() == TileType.DATA && !exclude.contains(node)) {
@@ -81,9 +70,7 @@ public class GreedyStrategy {
             }
         }
 
-        if (dataPoints.isEmpty()) {
-            return 0.0;
-        }
+        if (dataPoints.isEmpty()) return 0.0;
 
         return DCClusterDistance.averageDistanceToKClosest(
                 dataPoints,
@@ -93,25 +80,17 @@ public class GreedyStrategy {
         );
     }
 
-<<<<<<< HEAD
-    /**
-     * Returns the best direction according to the enhanced greedy heuristic:
-     * H = (dataCollected × 100) − average_distance_to_k_closest_data
-     */
-=======
->>>>>>> 9fda9d34092e92497100bdede047ca3cda74865a
     public Direction getBestDirection(BoardGraph graph) {
         GraphNode playerNode = graph.getPlayerNode();
         Direction bestDir = null;
         double bestScore = Double.NEGATIVE_INFINITY;
 
-        // DP memo cache for this turn
+        // Minimal DP: memo cache for this turn only
         DPMemoCache memo = new DPMemoCache();
 
         for (Direction dir : Direction.ALL) {
             SimulationResult sim = simulateSlide(graph, playerNode, dir);
 
-            // Blocked/invalid move
             if (sim.endNode == playerNode && sim.dataCollected == 0) {
                 continue;
             }
@@ -120,18 +99,14 @@ public class GreedyStrategy {
             if (sim.hitsVirus) {
                 score = -DEATH_PENALTY;
             } else {
-<<<<<<< HEAD
-                double avgClusterDist = distanceToNearestCluster(graph, sim.endNode, sim.collectedNodes);
-                score = sim.dataCollected * DATA_VALUE - avgClusterDist;
-=======
-                double distance = memo.getOrComputeDistance(
+                // Memoized cluster distance (DP reuse within turn)
+                double clusterDist = memo.getOrComputeDistance(
                         graph,
                         sim.endNode,
                         sim.collectedNodes,
-                        (g, f, e) -> distanceToNearestData(g, f, e)
+                        (g, f, e) -> distanceToCluster(g, f, e)
                 );
-                score = sim.dataCollected * DATA_VALUE - distance;
->>>>>>> 9fda9d34092e92497100bdede047ca3cda74865a
+                score = sim.dataCollected * DATA_VALUE - clusterDist;
             }
 
             if (score > bestScore) {

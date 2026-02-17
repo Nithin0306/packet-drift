@@ -4,6 +4,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * Divide and Conquer + Merge Sort for Cluster-Aware Distance
+ * Computes average Euclidean distance to the k closest data points
+ */
 public class DCClusterDistance {
 
     public record Point(int x, int y) {}
@@ -11,7 +15,6 @@ public class DCClusterDistance {
     /**
      * Returns the average Euclidean distance from (qx, qy) to the k closest data points.
      * If fewer than k points exist, averages all available points.
-     * k = 1 → equivalent to nearest neighbor distance
      */
     public static double averageDistanceToKClosest(
             List<Point> dataPoints,
@@ -26,10 +29,10 @@ public class DCClusterDistance {
 
         Point[] points = dataPoints.toArray(new Point[0]);
 
-   
+        // D&C Merge Sort by x-coordinate (shown for academic clarity)
         mergeSortByX(points, 0, points.length - 1);
 
-      
+        // Compute all distances
         double[] distances = new double[points.length];
         for (int i = 0; i < points.length; i++) {
             double dx = points[i].x - qx;
@@ -37,10 +40,10 @@ public class DCClusterDistance {
             distances[i] = Math.sqrt(dx * dx + dy * dy);
         }
 
-        
+        // Sort distances (Timsort via Arrays.sort)
         Arrays.sort(distances);
 
-        // Sum the k smallest distances
+        // Average the k smallest
         double sum = 0.0;
         int actualK = Math.min(k, distances.length);
         for (int i = 0; i < actualK; i++) {
@@ -50,11 +53,9 @@ public class DCClusterDistance {
         return sum / actualK;
     }
 
-   
+    // Manual merge sort by x (demonstrates D&C sorting)
     private static void mergeSortByX(Point[] arr, int left, int right) {
-        if (left >= right) {
-            return;
-        }
+        if (left >= right) return;
 
         int mid = left + (right - left) / 2;
 
@@ -71,12 +72,8 @@ public class DCClusterDistance {
         Point[] L = new Point[n1];
         Point[] R = new Point[n2];
 
-        for (int i = 0; i < n1; i++) {
-            L[i] = arr[left + i];
-        }
-        for (int j = 0; j < n2; j++) {
-            R[j] = arr[mid + 1 + j];
-        }
+        for (int i = 0; i < n1; i++) L[i] = arr[left + i];
+        for (int j = 0; j < n2; j++) R[j] = arr[mid + 1 + j];
 
         int i = 0, j = 0, k = left;
 
@@ -88,11 +85,7 @@ public class DCClusterDistance {
             }
         }
 
-        while (i < n1) {
-            arr[k++] = L[i++];
-        }
-        while (j < n2) {
-            arr[k++] = R[j++];
-        }
+        while (i < n1) arr[k++] = L[i++];
+        while (j < n2) arr[k++] = R[j++];
     }
 }
